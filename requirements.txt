@@ -1,0 +1,8 @@
+faiss==1.8.0
+faiss-cpu==1.8.0
+langchain==0.2.12
+langchain-community==0.2.12
+langchain-openai==0.1.21
+openai==1.37.0
+pandas==2.2.2
+streamlit==1.32.0
