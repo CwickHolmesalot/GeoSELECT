@@ -31,7 +31,9 @@ def ask_question(question: str, num_sessions: int, db: FAISS, threshold = 0.45):
              'time': doc.metadata['time'],
              'location': doc.metadata['sessionlocation'],
              'url': doc.metadata['url'],
-             'similar': doc.metadata['similar_links']})
+             'similar': doc.metadata['similar_links'],
+             'match':tup[1]
+             })
 
     return data
 
@@ -98,14 +100,47 @@ def get_db():
 db = get_db()
 
 # add a title to the webapp
-st.title("IMAGE 2024 - Abstract Finder")
+st.title("IMAGE 2024 - Abstract Semantic Search Tool")
+
+
+# Custom CSS for word wrapping
+custom_css = """
+<style>
+    .wrapped-text {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+</style>
+"""
+
+st.markdown('<div class="wrapped-text">This site leverages AI technology for contextual matches between your query and the 1200+ abstracts at the 2024 IMAGE conference. For a good keyword/author search, visit the <a href="https://www.imageevent.org/technical-program-/full-schedule" target="_blank">IMAGE Technical Program</a>. </div><br>', unsafe_allow_html=True)
+
+#st.markdown('<div class="wrapped-text">The match quality slider sets a similarity threshold between the query and the submitted abstract texts such that anything below the chosen threshold will not be returned.</div><br>', unsafe_allow_html=True)
+
+#st.markdown('<div class="wrapped-text">The abstract count slider determines the maximum number of abstract matches to return, if matches above the quality threshold are found.</div><br>', unsafe_allow_html=True)
+
+st.markdown("""Usage examples:
+- Low context query: *FWI*
+- Medium context query: *Exploration in Southeast Asia*
+- High context query: *Use of Segment Anything AI model for image segmentation of seismic data*
+""")
+
+st.markdown('<br>',unsafe_allow_html=True)
 
 question = st.text_input(
     label="What technical question or content are you looking for?  TIP: phrase like you're explaining to a friend, not as simplified keywords."
     )
+    
+match_thres = st.slider(
+    label="Query match quality threshold determining which results to ignore (0.0=little to no relationship, 1.0=fantastic match)",
+    min_value=0.0,
+    max_value=1.0,
+    step=0.05,
+    value=0.30,
+    )
 
 num_sessions = st.slider(
-    label="How many abstracts would you like to find (i.e., maximum reported if matches found)?",
+    label="Maximum abstract count to return if matches above the quality threshold are found",
     min_value=1,
     max_value=25,
     value=5,
@@ -113,8 +148,8 @@ num_sessions = st.slider(
 
 data= []
 if question:
-    data = ask_question(question=question, num_sessions=num_sessions, db=db, threshold=0.45)
+    data = ask_question(question=question, num_sessions=num_sessions, db=db, threshold=match_thres)
 
 for d in data:
-    with st.expander(f"{d['title']}"):
+    with st.expander(f"{d['title']} (Match Quality {d['match']:.0%})"):
         st.markdown(make_markdown_template(**d),unsafe_allow_html=True)
